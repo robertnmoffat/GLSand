@@ -13,6 +13,7 @@
 #include "../headers/IO.h"
 #include "../headers/GameState.h"
 #include "../headers/MoveRules.h"
+#include "../headers/Random.h"
 
 float angle = 0.0f;
 
@@ -32,6 +33,7 @@ bool secondThreadDone = true;
 // Load the texture
 void loadTexture()
 {
+    Random::init();
     // Set a random color for the texture
     for (int y = 0; y < height - 1; y++)
     {

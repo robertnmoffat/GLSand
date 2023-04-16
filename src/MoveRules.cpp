@@ -1,6 +1,7 @@
 #include "../headers/MoveRules.h"
 #include "../headers/GameState.h"
 #include "../headers/data.h"
+#include "../headers/Random.h"
 #include <cstdio>
 bool MoveRules::fall(int x, int y)
 {
@@ -26,7 +27,7 @@ bool MoveRules::sand(int x, int y)
     {
         return true;
     }
-    bool dir = rand() % 2;
+    bool dir = Random::next() % 2;
     if (dir)
     {
         if (state->getSand(x - 1, y - 1).type < sType::sand)
@@ -68,10 +69,10 @@ bool MoveRules::liquid(int x, int y)
     if (MoveRules::fall(x, y))
     {
         y -= 1;
-        if (rand() % 4 < 3)
+        if (Random::next() % 4 < 3)
             return true;
-        if (rand() % 10 == 1)
-            state->setSandLeft(rand() % 2, x, y); // randomize flow direction while falling
+        if (Random::next() % 10 == 1)
+            state->setSandLeft(Random::next() % 2, x, y); // randomize flow direction while falling
     }
     bool dir = state->getSand(x, y).left;
     if (dir == 0)
@@ -105,7 +106,7 @@ bool MoveRules::liquid(int x, int y)
         return false;
     }
     // Sand s = state->getSand(x,y);
-    // s.left=rand()%2;
+    // s.left=Random::next()%2;
     // state->setSand(s,x,y);
     return false;
 }
@@ -115,12 +116,12 @@ bool MoveRules::fire(int x, int y)
     GameState *state = GameState::getState();
     char brightness;
 
-    if (rand() % 2)
+    if (Random::next() % 2)
         return true;
 
     if (state->getSand(x + 1, y).type == oil)
     {
-        if (rand() % 10 == 1)
+        if (Random::next() % 10 == 1)
         {
             //state->setSand(sType::fire, FIRE_COLOUR, x + 1, y);
             //state->setSandColour(FIRE_COLOUR, x+1,y);
@@ -134,7 +135,7 @@ bool MoveRules::fire(int x, int y)
     }
     if (state->getSand(x - 1, y).type == oil)
     {
-        if (rand() % 10 == 1)
+        if (Random::next() % 10 == 1)
         {
             //state->setSand(sType::fire, FIRE_COLOUR, x - 1, y);
             state->setSand(state->getSand(x-1,y).type, FIRE_COLOUR, x-1,y);
@@ -148,7 +149,7 @@ bool MoveRules::fire(int x, int y)
     }
     if (state->getSand(x, y - 1).type == oil)
     {
-        if (rand() % 15 == 1){
+        if (Random::next() % 15 == 1){
             //state->setSand(sType::fire, FIRE_COLOUR, x, y - 1);
             //state->setSandColour(FIRE_COLOUR, x,y-1);
             state->setSand(state->getSand(x,y-1).type, FIRE_COLOUR, x,y-1);
@@ -160,16 +161,16 @@ bool MoveRules::fire(int x, int y)
     }
     if (state->getSand(x, y + 1).type == oil)
     {
-        // if(rand()%10==1)
+        // if(Random::next()%10==1)
         state->setSand(sType::fire, FIRE_COLOUR, x, y + 1);
     }
     if (state->getSand(x, y + 1).type == sType::fire)
     {
-        if (rand() % 4 == 1)//was 4
+        if (Random::next() % 4 == 1)//was 4
             state->setSandColour(FIRE_COLOUR, x, y);
     }
 
-    int dir = rand() % 6;
+    int dir = Random::next() % 6;
     if (dir == 0)
     {
         if (state->getSand(x + 1, y).type <= sType::fire)
@@ -188,14 +189,14 @@ bool MoveRules::fire(int x, int y)
     {
         state->moveSand(x, y, x, y++);
     }else {
-        if(rand()%4==1)//chance to clear if up against roof
+        if(Random::next()%4==1)//chance to clear if up against roof
         state->clearSand(x,y);
     }
 
 
     Colour c = state->getSandColour(x, y);
 
-    // if (c.g == FIRE_COLOUR.g && rand() % 100 == 1)
+    // if (c.g == FIRE_COLOUR.g && Random::next() % 100 == 1)
     // {
     //     if (state->getSand(x - 1, y).type == sType::solid)
     //     {
@@ -211,14 +212,14 @@ bool MoveRules::fire(int x, int y)
     //     }
     // }
 
-    brightness = rand() % 10 + 5;
+    brightness = Random::next() % 10 + 5;
     if (c.g + brightness < 255)
     {
         c.g += brightness;
     }
     else
     {
-        if (rand() % 5 == 1)
+        if (Random::next() % 5 == 1)
         { // done burning
             state->clearSand(x, y);
             return false;
@@ -233,14 +234,14 @@ bool MoveRules::burning(int x, int y)
 {
     GameState *state = GameState::getState();
 
-    // if (rand() % 25000 == 1)
+    // if (Random::next() % 25000 == 1)
     // {
     //     state->setSand(sType::burning, FIRE_COLOUR, x, y - 1);
     // }
 
     int burnLength = 800;
 
-    if (rand() % burnLength == 1 || state->getSand(x, y + 1).type == sType::water)
+    if (Random::next() % burnLength == 1 || state->getSand(x, y + 1).type == sType::water)
     { // done burning
         if (0)
             state->setSand(sType::sand, SAND_COLOUR, x, y);
@@ -248,18 +249,18 @@ bool MoveRules::burning(int x, int y)
             state->clearSand(x, y);
         return false;
     }
-    if (rand() % 4 == 1 && state->getSand(x, y + 1).type != state->getSand(x, y).type)
+    if (Random::next() % 4 == 1 && state->getSand(x, y + 1).type != state->getSand(x, y).type)
     {
         state->setSand(sType::fire, FIRE_COLOUR, x, y + 1);
     }
 
-    if(rand()%5==1&&state->getSand(x+1,y).type==sType::oil){//state->getSand(x,y).type){
+    if(Random::next()%5==1&&state->getSand(x+1,y).type==sType::oil){//state->getSand(x,y).type){
         state->setSandBurning(true, x+1,y);
     }
-    if(rand()%5==1&&state->getSand(x-1,y).type==sType::oil){//state->getSand(x,y).type){
+    if(Random::next()%5==1&&state->getSand(x-1,y).type==sType::oil){//state->getSand(x,y).type){
         state->setSandBurning(true, x-1,y);
     }
-    if(rand()%75==1&&state->getSand(x,y-1).type==sType::oil){//state->getSand(x,y).type){
+    if(Random::next()%75==1&&state->getSand(x,y-1).type==sType::oil){//state->getSand(x,y).type){
         state->setSandBurning(true, x,y-1);
     }
 
@@ -267,7 +268,7 @@ bool MoveRules::burning(int x, int y)
     // {
     //     return true;
     // }
-    // bool dir = rand() % 2;
+    // bool dir = Random::next() % 2;
     // if (dir)
     // {
     //     if (state->getSand(x - 1, y - 1).type < sType::sand || state->getSand(x - 1, y - 1).type == sType::fire)
