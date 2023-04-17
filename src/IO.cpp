@@ -24,7 +24,7 @@ void handleMouseInput(int button, int state, int x, int y)
                 switch (currentMouseState)
                 {
                 case 0:
-                    state->setSand(water, Colour{0, 0, (unsigned char)(235 + (rand() % 40 - 20))}, x + j, y + i);
+                    state->setSand(water, WATER_COLOUR, x + j, y + i);
                     // sands[y+i][x].colour = Colour{rand()%255,rand()%255,0};
                     break;
                 case 1:
@@ -99,7 +99,8 @@ void handleInput(unsigned char key, int x, int y)
         exit(0);
         break;
     case 32: // space key
-        GameState::getState()->setSand(sand, SAND_COLOUR, 100, 100);
+        //GameState::getState()->setSand(sand, SAND_COLOUR, 100, 100);
+
         break;
     }
 }
