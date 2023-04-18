@@ -15,34 +15,30 @@
 #include "../headers/MoveRules.h"
 #include "../headers/Random.h"
 
-float angle = 0.0f;
 
 GLuint texture_id;
 
-GLubyte texture[height][width][3];
+GLubyte texture[height][width][3];//Texture array being used as screen. To be drawn to rectangle the size of view.
 
-int frameCounter = 0;
+GameState *state;//Singleton that contains all sand states and functions to manipulate them.
 
-GameState *state;
-
-bool textureInUse = false;
-
-bool firstThreadDone = true;
-bool secondThreadDone = true;
+const int WAIT = 15;//How long to wait in milliseconds between particle updates.
 
 // Load the texture
 void loadTexture()
 {
+    //Initilize array of random numbers
     Random::init();
-    // Set a random color for the texture
+
+    //Draw a bunch of random sand all over the screen (for testing)
     for (int y = 0; y < height - 1; y++)
     {
         for (int x = 0; x < width; x++)
         {
-            if (rand() % 20 == 10)
+            if (rand() % 20 == 10)//Random chance that sand is drawn on each pixel
             {
                 Colour sandColour = SAND_COLOUR; // slightly randomize sand colouring
-                int brightness = rand() % 40 - 20;
+                int brightness = rand() % 40 - 20;//random fluctuations in sand colouring
                 sandColour.r += brightness;
                 sandColour.b += brightness;
                 sandColour.g += brightness;
@@ -50,6 +46,7 @@ void loadTexture()
             }
         }
     }
+    //Draw heavier sand on one side of dip
     for (int y = 0; y < height - 1; y++)
     {
         for (int x = 0; x < width; x++)
@@ -67,7 +64,7 @@ void loadTexture()
         }
     }
 
-
+    //Draw heavier sand on the other side of dip
     for (int y = 100; y < 110 - 1; y++)
     {
         for (int x = 100; x < 200; x++)
@@ -80,6 +77,8 @@ void loadTexture()
             state->setSand(solid, sandColour, x, y);
         }
     }
+
+    //Draw solid rock structure
     for (int y = 100; y < 200 - 1; y++)
     {
         for (int x = 100; x < 110; x++)
@@ -104,20 +103,22 @@ void loadTexture()
             state->setSand(solid, sandColour, x, y);
         }
     }
+
+    //Draw some oil
     for (int y = 110; y < 200 - 1; y++)
     {
         for (int x = 110; x < 190; x++)
         {
-            Colour sandColour = Colour{10, 10, 10}; // grayish
+            Colour sandColour = Colour{10, 10, 10};
             state->setSand(oil, sandColour, x, y);
         }
     }
 
+    //Draw some water
     for (int y = 100; y < 150 - 1; y++)
     {
         for (int x = 350; x < 450; x++)
         {
-            //Colour sandColour = Colour{10, 10, 10}; // grayish
             state->setSand(water, WATER_COLOUR, x, y);
         }
     }
@@ -130,13 +131,19 @@ void loadTexture()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
+/*
+    Update positions of sand particles at the given coordinates.
+*/
 void updatePosition(int x, int y)
 {
+    //Current sand being updated.
     Sand curSand = state->getSand(x, y);
 
+    //If the sand is not moving, don't bother updating it.
     if (curSand.moving == false)
         return;
 
+    //If the current particle is open air, draw it blank and skip updates.
     if (curSand.type == none)
     {
         texture[y][x][0] = 20;
@@ -144,23 +151,23 @@ void updatePosition(int x, int y)
         texture[y][x][2] = 20;
         return;
     }
+    //Set texture at this position to sand colour at this position.
     texture[y][x][0] = curSand.colour.r;
     texture[y][x][1] = curSand.colour.g;
     texture[y][x][2] = curSand.colour.b;
 
+    //If sand is going over the top of the screen just delete it
     if(y==height-1){
         state->clearSand(x,y);
     }
     if (y > 1)
     {
-        // if(state->getSand(x,y).phase==state->getPhase())return;//already updated
+        //If it is a burning particle, first perform is burning functionality
         if(state->getSand(x,y).burning){
             MoveRules::burning(x,y);
-            // if(rand()%2==1&&state->getSand(x,y+1).type==sType::fire){
-            //     state->moveSand(x,y,x,y+1);
-            // }
         }
 
+        //Depending on the particle type, handle it's movement
         switch (state->getSand(x, y).type)
         {
         case sand:
@@ -190,18 +197,19 @@ long long getCurrentTimeInMillis()
         std::chrono::system_clock::now().time_since_epoch()).count(); 
 }
 
-const int WAIT = 15;
-
+/*
+    Update for the first thread.
+    TODO: Change to single function for both.
+*/
 void updateTex1()
 {
-    long curTime=0, lastTime=0, diff;
+    long curTime=0, lastTime=0, diff;//variables for dynamic wait times
     while (true)
     {
         curTime = getCurrentTimeInMillis();
         diff = (curTime-lastTime);
-        if(WAIT-diff<0)diff = WAIT;        
-        //printf("%d\n", diff);
-        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT-diff));
+        if(WAIT-diff<0)diff = WAIT;//if if took longer than the full wait time, just set to the wait time so that wait will be 0 rather than negative
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT-diff));//adjust the wait time based on how long the particle update is taking. Smoothes times
         lastTime = getCurrentTimeInMillis();
         for (int y = 0; y < height; y += 2)
         {
@@ -217,6 +225,10 @@ void updateTex1()
     }
 }
 
+/*
+    Update for the second thread.
+    TODO: Change to single function for both.
+*/
 void updateTex2()
 {
     long curTime=0, lastTime=0, diff;
@@ -224,11 +236,12 @@ void updateTex2()
     {
         curTime = getCurrentTimeInMillis();
         diff = (curTime-lastTime);
-        if(WAIT-diff<0)diff = WAIT;
-        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT-diff));
+        if(WAIT-diff<0)diff = WAIT;//if if took longer than the full wait time, just set to the wait time so that wait will be 0 rather than negative
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT-diff));//adjust the wait time based on how long the particle update is taking. Smoothes times
         lastTime = getCurrentTimeInMillis();
         for (int y = 1; y < height; y += 2)
         {
+            //Move through the particles by 2's to avoid updating the same particle again and again. (teleporting)
             for (int x = width - 1; x >= 0; x -= 2)
             {
                 updatePosition(x, y);
@@ -241,6 +254,9 @@ void updateTex2()
     }
 }
 
+/*
+    Old single-threaded texture update.
+*/
 void updateTex()
 {
     while (true)
@@ -260,12 +276,12 @@ void updateTex()
                 updatePosition(x, y);
             }
         }
-
-        // int x_offset = 0, y_offset = 0, sub_width = width, sub_height = height;
-        // glTexSubImage2D(GL_TEXTURE_2D, 0, x_offset, y_offset, sub_width, sub_height, GL_RGB, GL_UNSIGNED_BYTE, texture[x_offset][y_offset]);
     }
 }
 
+/*
+    Draw the screen-sized rectangle that the texture pixels will be drawn to.
+*/
 void drawSquare()
 {
     glBegin(GL_QUADS);
@@ -282,20 +298,13 @@ void drawSquare()
 
 void display()
 {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    //std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
     int x_offset = 0, y_offset = 0, sub_width = width, sub_height = height;
     glTexSubImage2D(GL_TEXTURE_2D, 0, x_offset, y_offset, sub_width, sub_height, GL_RGB, GL_UNSIGNED_BYTE, texture[x_offset][y_offset]);
 
-    // glClear(GL_COLOR_BUFFER_BIT);
-
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture_id);
-
-    // glLoadIdentity();
-
-    // glRotatef(angle, 0.0f, 0.0f, 1.0f);
-    //  glTranslatef(0.5f, 0.5f, 0.0f);
 
     drawSquare();
     state->swapCurrentPhase();
@@ -304,21 +313,6 @@ void display()
     glFlush();
 
     state->swapCurrentPhase();
-    // glutSwapBuffers();
-
-    // angle += 0.1f;
-    //  loadTexture();
-    // updateTex();
-
-    // if (frameCounter == 2)
-    // {
-    //     updateTex();
-    //     frameCounter=0;
-    // }
-    // else
-    // {
-    //     frameCounter++;
-    // }
 }
 
 void reshape(int w, int h)
