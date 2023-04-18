@@ -9,6 +9,7 @@ bool MoveRules::fall(int x, int y)
 
     if (state->getSand(x, y - 1).type < state->getSand(x, y).type)
     {
+        if(state->getSand(x, y-1).type!=none&&Random::next()%2==1)return false;
         state->moveSand(x, y, x, y - 1);
         // state->setSandMoving(true, x, y-1);
         return true;
@@ -166,7 +167,7 @@ bool MoveRules::fire(int x, int y)
     }
     if (state->getSand(x, y + 1).type == sType::fire)
     {
-        if (Random::next() % 4 == 1)//was 4
+        if (Random::next() % 6 == 1)//was 4
             state->setSandColour(FIRE_COLOUR, x, y);
     }
 
@@ -212,14 +213,14 @@ bool MoveRules::fire(int x, int y)
     //     }
     // }
 
-    brightness = Random::next() % 10 + 5;
+    brightness = Random::next() % 20 + 5;
     if (c.g + brightness < 255)
     {
         c.g += brightness;
     }
     else
     {
-        if (Random::next() % 5 == 1)
+        if (Random::next() % 2 == 1)
         { // done burning
             state->clearSand(x, y);
             return false;
@@ -249,18 +250,18 @@ bool MoveRules::burning(int x, int y)
             state->clearSand(x, y);
         return false;
     }
-    if (Random::next() % 4 == 1 && state->getSand(x, y + 1).type != state->getSand(x, y).type)
+    if (Random::next() % 1 == 0 && state->getSand(x, y + 1).type != state->getSand(x, y).type)
     {
         state->setSand(sType::fire, FIRE_COLOUR, x, y + 1);
     }
 
-    if(Random::next()%5==1&&state->getSand(x+1,y).type==sType::oil){//state->getSand(x,y).type){
+    if(Random::next()%50==1&&state->getSand(x+1,y).type==sType::oil){//state->getSand(x,y).type){
         state->setSandBurning(true, x+1,y);
     }
-    if(Random::next()%5==1&&state->getSand(x-1,y).type==sType::oil){//state->getSand(x,y).type){
+    if(Random::next()%50==1&&state->getSand(x-1,y).type==sType::oil){//state->getSand(x,y).type){
         state->setSandBurning(true, x-1,y);
     }
-    if(Random::next()%75==1&&state->getSand(x,y-1).type==sType::oil){//state->getSand(x,y).type){
+    if(Random::next()%50==1&&state->getSand(x,y-1).type==sType::oil){//state->getSand(x,y).type){
         state->setSandBurning(true, x,y-1);
     }
 

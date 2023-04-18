@@ -183,11 +183,26 @@ void updatePosition(int x, int y)
     }
 }
 
+// Function to get current time in millis 
+long long getCurrentTimeInMillis() 
+{ 
+    return std::chrono::duration_cast<std::chrono::milliseconds>( 
+        std::chrono::system_clock::now().time_since_epoch()).count(); 
+}
+
+const int WAIT = 15;
+
 void updateTex1()
 {
+    long curTime=0, lastTime=0, diff;
     while (true)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        curTime = getCurrentTimeInMillis();
+        diff = (curTime-lastTime);
+        if(WAIT-diff<0)diff = WAIT;        
+        //printf("%d\n", diff);
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT-diff));
+        lastTime = getCurrentTimeInMillis();
         for (int y = 0; y < height; y += 2)
         {
             for (int x = 0; x < width; x += 2)
@@ -198,15 +213,20 @@ void updateTex1()
             {
                 updatePosition(x, y);
             }
-        }
+        }        
     }
 }
 
 void updateTex2()
 {
+    long curTime=0, lastTime=0, diff;
     while (true)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        curTime = getCurrentTimeInMillis();
+        diff = (curTime-lastTime);
+        if(WAIT-diff<0)diff = WAIT;
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT-diff));
+        lastTime = getCurrentTimeInMillis();
         for (int y = 1; y < height; y += 2)
         {
             for (int x = width - 1; x >= 0; x -= 2)
